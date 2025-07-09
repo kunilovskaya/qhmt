@@ -16,6 +16,6 @@ The expected number of raters per translation direction: 3
 ### Content
 - calculate automatic quality scores: `automatic_metrics.py`
 - design and format the annotation spreadsheet, inc. selecting the most challenging docs: `manual_setup.py`
-- fill in dummy/proxy annotations and collect real, inc. generating proxy scores for deen only: `anno_postpro.py`
+- fill in dummy/proxy annotations and collect scores from real annotators: `anno_postpro.py`
 - count and visualise interrater reliability: `interrater_agreement.py`
 - correlate manual and automatic scores: `raters_vs_metrics.py`
