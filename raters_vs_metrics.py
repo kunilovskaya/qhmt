@@ -214,6 +214,7 @@ if __name__ == "__main__":
 
         # print(df.head())
         # print(df.shape)
+
         # print(df.columns.tolist())
         ol_auto = metrics + ['mean_normed_metrics']
         # Create a discrete colormap with as many colors as features
