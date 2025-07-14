@@ -20,6 +20,7 @@ import seaborn as sns
 import pandas as pd
 from scipy.stats import spearmanr, pearsonr
 from sklearn.preprocessing import StandardScaler
+from scipy.stats import zscore
 
 
 def decode_raters(my_df, my_map=None):
@@ -74,15 +75,17 @@ def trend_and_fit(normed_df, numeric_feats, response, save_pic,
         )
 
     if trend == "spearman":
-        ax.legend(title="Auto metrics and trend (Spearman)", bbox_to_anchor=(1.05, 1), loc='upper left')
+        ax.legend(title="Auto metrics and trend (Spearman *=signif)",
+                  loc='best', fontsize=18, title_fontsize=20)
     else:
-        ax.legend(title="Auto metrics (Pearson)", bbox_to_anchor=(1.05, 1), loc='upper left')
-    ax.set_xlabel("Z-transformed auto metric values", fontsize=12)
+        ax.legend(title="Auto metrics (Pearson *=signif)", loc='best', fontsize=18, title_fontsize=20)
+    ax.set_xlabel("Z-transformed auto metric values", fontsize=20)
     if 'scaled' in save_pic:
-        ax.set_ylabel(f"Z-transformed human scores: {response}", fontsize=12)
+        ax.set_ylabel(f"Z-transformed human scores: {response}", fontsize=20)
     else:
-        ax.set_ylabel(f"Human scores: {response}", fontsize=12)
-    ax.set_title(f"{my_lpair.upper()}: Univariate linear regression (best fit)", fontsize=14)
+        ax.set_ylabel(f"Human scores: {response}", fontsize=18)
+    ax.set_title(f"{my_lpair.upper()}: Univariate linear regression (best fit)", fontsize=20)
+    ax.tick_params(axis='both', labelsize=16)
     sns.despine()
     plt.tight_layout()
     plt.tight_layout()
@@ -93,7 +96,7 @@ def trend_and_fit(normed_df, numeric_feats, response, save_pic,
 
     return summary_df
 
-
+# same as zcore from scipy.stats zcore
 def standardise_scores(scores_list):
     scores_2d = np.array(scores_list).reshape(-1, 1)  # this is done to fit the requirements of the scaling function
     scaler = StandardScaler()
@@ -103,7 +106,7 @@ def standardise_scores(scores_list):
     return normed_scores
 
 
-# same as
+# same as zcore from scipy.stats zcore
 def standardise_scores_manual(scores_list):
     # Calculate mean and standard deviation for each rater
     mean_rater, std_rater = np.mean(scores_list), np.std(scores_list)
@@ -187,10 +190,13 @@ if __name__ == "__main__":
         scaler = StandardScaler()
         if not args.no_scaling:
             for nr, annotator in enumerate(names):
-                this_rater_scores = df[annotator].values
                 # z-transform: The scores now have a mean of 0 and a standard deviation of 1.
                 # Needed to take into account individual human biases
-                df[f'{annotator}_scaled'] = standardise_scores(this_rater_scores)
+                # this_rater_scores = df[annotator].values
+                # df[f'{annotator}_scaled'] = standardise_scores(this_rater_scores)
+
+                # this implementation handles Nones
+                df[f'{annotator}_scaled'] = zscore(df[annotator], nan_policy='omit')
         names_scaled = [f"{rater}_scaled" for rater in names]
         if len(names) <= 1:
             pass
@@ -206,9 +212,9 @@ if __name__ == "__main__":
         df_normed = pd.DataFrame(scaler.fit_transform(df[metrics]), columns=metrics)
         df['mean_normed_metrics'] = df_normed.mean(axis=1)
 
-        print(df.head())
-        print(df.shape)
-        print(df.columns.tolist())
+        # print(df.head())
+        # print(df.shape)
+        # print(df.columns.tolist())
         ol_auto = metrics + ['mean_normed_metrics']
         # Create a discrete colormap with as many colors as features
         cmap = plt.get_cmap("viridis", len(ol_auto))  # diff_cols
@@ -219,10 +225,7 @@ if __name__ == "__main__":
             humans = ['mean_raters', 'mean_raters_scaled'] + names + names_scaled
 
         for manual_scores in humans:
-            if 'scaled' in manual_scores:
-                save_pic = f"{args.pics}{lpair}_scaled_{manual_scores}_vs_auto_assessment.png"
-            else:
-                save_pic = f"{args.pics}{lpair}_{manual_scores}_vs_auto_assessment.png"
+            save_pic = f"{args.pics}{lpair}_{manual_scores}_vs_auto_assessment.png"
 
             coef_res = trend_and_fit(df, numeric_feats=ol_auto,
                                      response=manual_scores, save_pic=save_pic,
